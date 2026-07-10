@@ -6,7 +6,6 @@ import styles from './PaywallSheet.module.css';
 export default function PaywallSheet({ onClose, onUnlocked }: { onClose: () => void; onUnlocked: () => void }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [showCodeField, setShowCodeField] = useState(false);
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState('');
 
@@ -48,34 +47,28 @@ export default function PaywallSheet({ onClose, onUnlocked }: { onClose: () => v
           Desbloqueie todas as semanas do seu plano, treino de força completo e ajustes ilimitados.
         </p>
         {message && <p className={styles.subtitle}>{message}</p>}
+
+        <p className={styles.codeLabel}>Tem um código de desbloqueio?</p>
+        <div className={styles.codeRow}>
+          <input
+            type="password"
+            placeholder="Código secreto"
+            value={code}
+            onChange={e => setCode(e.target.value)}
+          />
+          <button className="btn-primary" disabled={loading || !code} onClick={unlockWithCode}>
+            Desbloquear
+          </button>
+        </div>
+        {codeError && <p className={styles.codeError}>{codeError}</p>}
+
         <div className={styles.actions}>
-          <button className="btn-primary" disabled={loading} onClick={subscribe}>
+          <button className="btn-secondary" disabled={loading} onClick={subscribe}>
             Assinar agora
           </button>
-          <button className="btn-secondary" disabled={loading} onClick={onClose}>
+          <button className={styles.testBtn} disabled={loading} onClick={onClose}>
             Agora não
           </button>
-          {!showCodeField ? (
-            <button className={styles.testBtn} disabled={loading} onClick={() => setShowCodeField(true)}>
-              Tenho um código de desbloqueio
-            </button>
-          ) : (
-            <>
-              <div className={styles.codeRow}>
-                <input
-                  type="password"
-                  placeholder="Código secreto"
-                  value={code}
-                  onChange={e => setCode(e.target.value)}
-                  autoFocus
-                />
-                <button className="btn-secondary" disabled={loading || !code} onClick={unlockWithCode}>
-                  Desbloquear
-                </button>
-              </div>
-              {codeError && <p className={styles.codeError}>{codeError}</p>}
-            </>
-          )}
         </div>
       </div>
     </div>

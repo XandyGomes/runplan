@@ -35,25 +35,16 @@
   margin-bottom: 24px;
 }
 
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.testBtn {
-  background: transparent;
-  border: none;
-  color: var(--text-3);
+.codeLabel {
   font-size: 13px;
-  padding: 8px;
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
 }
 
 .codeRow {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
 }
 
 .codeRow input {
@@ -71,5 +62,23 @@
 .codeError {
   color: var(--error);
   font-size: 12px;
-  margin-top: -2px;
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.testBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-size: 13px;
+  padding: 8px;
+  cursor: pointer;
 }
