@@ -19,7 +19,7 @@ const LEVELS = [
   { value: 'avancado', label: 'Avançado' },
 ];
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 type Assessment = {
   peakWeeklyKm: number;
@@ -35,6 +35,7 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [coachNote, setCoachNote] = useState('');
 
   const [raceOption, setRaceOption] = useState<RaceOption | null>(null);
   const [customKm, setCustomKm] = useState('10');
@@ -45,6 +46,7 @@ export default function OnboardingPage() {
   const [daysPerWeek, setDaysPerWeek] = useState(4);
   const [currentWeeklyKm, setCurrentWeeklyKm] = useState(15);
   const [includeStrength, setIncludeStrength] = useState(true);
+  const [coachContext, setCoachContext] = useState('');
 
   const raceKm = raceOption?.km ?? (Number(customKm) || 10);
   const raceLabel = raceOption?.label ?? `${customKm}km`;
@@ -75,6 +77,7 @@ export default function OnboardingPage() {
           daysPerWeek,
           currentWeeklyKm,
           includeStrength,
+          coachContext: coachContext.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -85,6 +88,7 @@ export default function OnboardingPage() {
       }
       setSubmitting(false);
       setAssessment(data.assessment || null);
+      setCoachNote(data.coachNote || '');
     } catch {
       setError('Erro de conexão. Tente novamente.');
       setSubmitting(false);
@@ -100,8 +104,11 @@ export default function OnboardingPage() {
     return (
       <div className={styles.wrap}>
         <h1 className={styles.title}>{assessment.realistic ? 'Plano pronto! 🎯' : 'Plano pronto — com um alerta'}</h1>
+        <p className={styles.subtitle} style={{ marginBottom: 8 }}>
+          {coachNote ? 'Análise do seu treinador:' : 'Resumo do plano:'}
+        </p>
         <div className={`${styles.optionCard} ${styles.optionCardWide} ${!assessment.realistic ? styles.optionCardActive : ''}`} style={{ cursor: 'default', marginBottom: 16 }}>
-          <p style={{ margin: 0 }}>{assessment.note}</p>
+          <p style={{ margin: 0 }}>{coachNote || assessment.note}</p>
         </div>
         <p className={styles.subtitle}>
           Pico previsto: <b>{assessment.peakWeeklyKm}km/semana</b> · treino longo de até <b>{assessment.peakLongRunKm}km</b>
@@ -260,6 +267,34 @@ export default function OnboardingPage() {
         </>
       )}
 
+      {step === 6 && (
+        <>
+          <h1 className={styles.title}>Quer contar mais algo pro treinador?</h1>
+          <p className={styles.subtitle}>
+            Lesão, dor recorrente, restrição médica, horário que prefere treinar... (opcional — a IA usa isso pra
+            revisar seu plano antes de gerar)
+          </p>
+          <div className={styles.field}>
+            <textarea
+              rows={5}
+              placeholder="Ex: já tive dor no joelho direito, prefiro treinar de manhã cedo..."
+              value={coachContext}
+              onChange={e => setCoachContext(e.target.value)}
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-active)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px 16px',
+                color: 'var(--text)',
+                fontFamily: 'inherit',
+                fontSize: 16,
+                resize: 'vertical',
+              }}
+            />
+          </div>
+        </>
+      )}
+
       {error && <p className={styles.errorText}>{error}</p>}
 
       <div className={styles.footer}>
@@ -274,7 +309,7 @@ export default function OnboardingPage() {
           </button>
         ) : (
           <button className="btn-primary" disabled={submitting} onClick={submit}>
-            {submitting ? 'Gerando plano...' : 'Gerar meu plano'}
+            {submitting ? 'Montando e revisando com a IA...' : 'Gerar meu plano'}
           </button>
         )}
       </div>

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getAthleteId } from '@/lib/session';
-import { generatePlan, ExperienceLevel } from '@/lib/planEngine';
+import { callAI } from '@/lib/ai';
+import { generatePlan, ExperienceLevel, GeneratedPlan } from '@/lib/planEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,45 @@ function mondayOfCurrentWeek(date: Date): Date {
   const diff = (day + 6) % 7;
   d.setDate(d.getDate() - diff);
   return d;
+}
+
+/**
+ * Manda o plano JÁ CALCULADO (determinístico) pra IA revisar como um treinador
+ * revisaria um rascunho — a IA nunca inventa números novos, só analisa os que
+ * o motor de periodização já validou como seguros e escreve uma devolutiva real.
+ */
+async function reviewPlanWithAI(
+  generated: GeneratedPlan,
+  input: { raceLabel: string; level: string; daysPerWeek: number; durationWeeks: number; currentWeeklyKm: number },
+  coachContext?: string
+): Promise<string | null> {
+  const phaseSummary = generated.weeks
+    .map(w => `Semana ${w.weekNumber} (${w.phase}): ${w.totalKm}km`)
+    .join('\n');
+
+  const prompt = `Você é um treinador de corrida especialista revisando um plano que já foi calculado por um sistema de periodização (regra de crescimento de ~8%/semana, descarga a cada 4 semanas, taper no final). Os números abaixo JÁ são seguros e definitivos — não invente nem sugira números diferentes, sua função é dar uma devolutiva de treinador sobre esse plano específico.
+
+Objetivo: ${input.raceLabel}
+Nível informado: ${input.level}
+Dias de corrida por semana: ${input.daysPerWeek}
+Duração do plano: ${input.durationWeeks} semanas
+Volume semanal atual do atleta: ${input.currentWeeklyKm}km
+
+Progressão semanal calculada:
+${phaseSummary}
+
+Avaliação automática do sistema: pico de ${generated.assessment.peakWeeklyKm}km/semana, treino longo de até ${generated.assessment.peakLongRunKm}km (ideal seria ${generated.assessment.idealPeakWeeklyKm}km/semana). Considerado ${generated.assessment.realistic ? 'adequado' : 'abaixo do ideal para a distância, mas seguro'}.
+${coachContext ? `\nO atleta contou o seguinte contexto: "${coachContext}"` : ''}
+
+Escreva uma devolutiva curta (3 a 5 frases, português do Brasil, tom de treinador experiente e direto) comentando esse plano específico. ${coachContext ? 'Responda diretamente ao contexto que o atleta contou, com orientação prática.' : ''} Se o plano estiver abaixo do ideal, explique como abordar a prova com segurança (ex: ritmo mais conservador, pausas para caminhada). Não repita os números de forma robótica — fale como um treinador de verdade falaria com o atleta.`;
+
+  try {
+    const text = await callAI([{ role: 'user', content: prompt }], 350);
+    return text.trim();
+  } catch (err: any) {
+    console.warn('[Plan] Falha ao gerar revisão da IA:', err.message);
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -31,6 +71,7 @@ export async function POST(request: Request) {
     daysPerWeek,
     currentWeeklyKm,
     includeStrength,
+    coachContext,
   } = body as {
     raceDistanceKm: number;
     raceLabel: string;
@@ -40,6 +81,7 @@ export async function POST(request: Request) {
     daysPerWeek: number;
     currentWeeklyKm: number;
     includeStrength: boolean;
+    coachContext?: string;
   };
 
   if (!raceDistanceKm || !raceLabel || !level || !daysPerWeek) {
@@ -111,5 +153,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: workoutsError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ planId: plan.id, weeks: generated.weeks, assessment: generated.assessment });
+  const coachNote = await reviewPlanWithAI(
+    generated,
+    { raceLabel, level, daysPerWeek, durationWeeks, currentWeeklyKm: currentWeeklyKm || 0 },
+    coachContext
+  );
+
+  return NextResponse.json({ planId: plan.id, weeks: generated.weeks, assessment: generated.assessment, coachNote });
 }

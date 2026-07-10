@@ -36,6 +36,9 @@ const callGemini = async (messages: Message[], maxTokens: number): Promise<strin
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: maxTokens,
+      // Sem isso, o Gemini 2.5 gasta parte (ou todo) o orçamento de tokens em
+      // "thinking" interno antes de escrever a resposta, cortando o texto visível.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
@@ -90,7 +93,11 @@ const callGeminiFlash = async (messages: Message[], maxTokens: number): Promise<
 
   const body: Record<string, unknown> = {
     contents,
-    generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens },
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: maxTokens,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
   };
   if (systemMsg) body.systemInstruction = { parts: [{ text: systemMsg.content }] };
 
