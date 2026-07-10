@@ -14,10 +14,19 @@
 ## ✨ Funcionalidades Principais
 
 ### 📅 Motor de Plano Periodizado
-Gera um plano de treino completo (6 a 26 semanas) para a distância da prova escolhida:
-- Progressão de volume automática (~10%/semana) com semana de descarga a cada 4 semanas.
-- Fases de treino (base, construção, pico, polimento) que ajustam intensidade e tipos de treino ao longo do plano.
+Gera um plano de treino completo (6 a 26 semanas) para a distância da prova escolhida, seguindo regras reais de periodização usadas por treinadores:
+- Progressão de volume limitada a ~8%/semana (regra dos 10% conservadora) — nunca "estica" o plano até uma meta ideal se o prazo disponível não permitir com segurança.
+- Semana de descarga a cada 4 semanas (padrão 3:1), sem travar a tendência de crescimento das semanas seguintes.
+- Fases de treino (base, construção, pico, polimento) que ajustam intensidade, tipos de treino e proporção do treino longo ao longo do plano.
+- Data da prova é usada exatamente como informada, e o plano sempre começa cobrindo o dia de hoje.
 - Treino de força complementar intercalado com as corridas.
+
+### 🧠 IA híbrida: números confiáveis + julgamento de treinador real
+O motor determinístico acima cuida de tudo que precisa ser **sempre correto** (datas, distâncias, progressão segura). Depois de calcular o plano, a mesma IA usada no [Aura Run](https://github.com/XandyGomes/aura-run) (Gemini/Groq, com fallback automático) **revisa o plano inteiro como um treinador revisando um rascunho**:
+- Avalia se o volume de pico é adequado para a distância da prova e avisa quando o prazo é curto demais para o ideal, com orientação real de como abordar a prova com segurança.
+- O atleta pode contar contexto livre no onboarding (lesão, restrição, objetivo específico) e a IA incorpora isso na devolutiva, com conselho prático — não um texto genérico.
+- A IA nunca inventa números: ela só analisa e comenta os que o motor determinístico já validou como seguros.
+- Cada treino individual também recebe um resumo gerado por IA explicando o objetivo e como executá-lo.
 
 ### 🏠 Tela "Hoje"
 - Faixa semanal com indicador de progresso e treino do dia colorido por tipo (leve, intervalado, longão, força...).
@@ -27,9 +36,6 @@ Gera um plano de treino completo (6 a 26 semanas) para a distância da prova esc
 ### 🗓️ Calendário
 - Visão por semana (com opção de redefinir uma semana específica) e visão mensal.
 - Vínculo automático com atividades do Strava para marcar treinos como concluídos.
-
-### 🤖 Resumo de Treino com IA
-Cada treino recebe um resumo gerado por IA explicando o objetivo e como executá-lo — a distância e o ritmo vêm sempre do motor determinístico, nunca da IA, para garantir números confiáveis.
 
 ### 📲 PWA Instalável
 Funciona como app instalável direto do navegador (Android/iOS), com ícone próprio e tela cheia sem barra de navegador.
