@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       maxAge: data.expires_in,
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
 
     cookieStore.set('strava_refresh_token', data.refresh_token, {
@@ -39,20 +39,22 @@ export async function GET(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 30,
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
 
     cookieStore.set('user_name', data.athlete.firstname || '', {
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
     });
     cookieStore.set('user_photo', data.athlete.profile_medium || data.athlete.profile || '', {
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
     });
     cookieStore.set('strava_athlete_id', data.athlete.id.toString(), {
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax',
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 30,

@@ -13,14 +13,14 @@ async function persistTokens(data: { access_token: string; refresh_token: string
     secure: process.env.NODE_ENV === 'production',
     maxAge: data.expires_in,
     path: '/',
-    sameSite: 'strict',
+    sameSite: 'lax',
   });
   cookieStore.set('strava_refresh_token', data.refresh_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 30,
     path: '/',
-    sameSite: 'strict',
+    sameSite: 'lax',
   });
 }
 
