@@ -111,5 +111,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: workoutsError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ planId: plan.id, weeks: generated.weeks });
+  return NextResponse.json({ planId: plan.id, weeks: generated.weeks, assessment: generated.assessment });
 }

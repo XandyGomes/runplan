@@ -35,9 +35,18 @@ export type GeneratedWeek = {
   phase: 'base' | 'build' | 'peak' | 'taper';
 };
 
+export type PlanAssessment = {
+  peakWeeklyKm: number;
+  peakLongRunKm: number;
+  idealPeakWeeklyKm: number;
+  realistic: boolean;
+  note: string;
+};
+
 export type GeneratedPlan = {
   weeks: GeneratedWeek[];
   workouts: GeneratedWorkout[];
+  assessment: PlanAssessment;
 };
 
 const PACE_MIN_PER_KM: Record<ExperienceLevel, [number, number]> = {
@@ -65,6 +74,27 @@ const phaseForWeek = (weekNumber: number, totalWeeks: number): GeneratedWeek['ph
 };
 
 const isDeloadWeek = (weekNumber: number) => weekNumber % 4 === 0;
+
+/** Crescimento máximo de volume semanal — versão conservadora da "regra dos 10%" usada
+ *  por treinadores para reduzir risco de lesão por overtraining. */
+const MAX_WEEKLY_GROWTH = 1.08;
+const DELOAD_FACTOR = 0.75;
+
+/** Quanto do volume da semana vai pro treino longo — cresce conforme a fase avança,
+ *  já que a especificidade pro dia da prova importa mais perto do pico. */
+const LONG_RUN_SHARE: Record<GeneratedWeek['phase'], number> = {
+  base: 0.3,
+  build: 0.35,
+  peak: 0.42,
+  taper: 0.35,
+};
+
+/** Long run mínimo (% da distância da prova) pra considerar o plano seguro/realista. */
+const MIN_LONG_RUN_RATIO_FOR_DISTANCE = (raceDistanceKm: number) => {
+  if (raceDistanceKm <= 10) return 0.9;
+  if (raceDistanceKm <= 21.5) return 0.7;
+  return 0.65;
+};
 
 const round5 = (mins: number) => Math.max(15, Math.round(mins / 5) * 5);
 const roundHalf = (km: number) => Math.max(2, Math.round(km * 2) / 2);
@@ -105,7 +135,7 @@ function buildWorkoutForSlot(
   weekKm: number
 ): { type: WorkoutType; distanceKm: number; title: string; paceGuidance: string } {
   const isLast = slotIndex === slotsInWeek.length - 1;
-  const longKm = roundHalf(weekKm * 0.35);
+  const longKm = roundHalf(weekKm * LONG_RUN_SHARE[phase]);
 
   if (isRaceWeek && isLast) {
     return {
@@ -177,11 +207,56 @@ function buildWorkoutForSlot(
   };
 }
 
+/**
+ * Calcula o volume semanal (km) de cada semana do plano respeitando um teto seguro de
+ * crescimento (~8%/semana) a partir do volume atual do atleta — nunca "estica" o plano
+ * até uma meta ideal se o prazo disponível não permitir chegar lá com segurança. Semanas
+ * de descarga reduzem o volume prescrito daquela semana, mas não interrompem a tendência
+ * de crescimento (ela seria retomada na semana seguinte).
+ */
+function computeWeeklyVolumes(startKm: number, idealPeakKm: number, durationWeeks: number, minKm: number): number[] {
+  const taperWeeks = Math.max(1, Math.round(durationWeeks * 0.1));
+  const buildWeeks = durationWeeks - taperWeeks;
+
+  const volumes: number[] = [];
+  let trendKm = startKm;
+  for (let weekNumber = 1; weekNumber <= buildWeeks; weekNumber++) {
+    if (weekNumber > 1) trendKm = Math.min(trendKm * MAX_WEEKLY_GROWTH, idealPeakKm);
+    const actual = isDeloadWeek(weekNumber) ? trendKm * DELOAD_FACTOR : trendKm;
+    volumes.push(roundHalf(Math.max(actual, minKm)));
+  }
+
+  const achievedPeakKm = volumes.length > 0 ? Math.max(...volumes) : startKm;
+  for (let i = 0; i < taperWeeks; i++) {
+    const weeksFromEnd = taperWeeks - i - 1;
+    const factor = weeksFromEnd === 0 ? 0.4 : 1 - (taperWeeks - weeksFromEnd) * 0.2;
+    volumes.push(roundHalf(Math.max(achievedPeakKm * factor, minKm)));
+  }
+
+  return volumes;
+}
+
+function buildAssessment(weeklyVolumes: number[], idealPeakKm: number, input: PlanInput): PlanAssessment {
+  const peakWeeklyKm = Math.max(...weeklyVolumes);
+  const peakPhaseShare = LONG_RUN_SHARE.peak;
+  const peakLongRunKm = roundHalf(peakWeeklyKm * peakPhaseShare);
+  const minRatio = MIN_LONG_RUN_RATIO_FOR_DISTANCE(input.raceDistanceKm);
+  const realistic = peakLongRunKm / input.raceDistanceKm >= minRatio;
+
+  const note = realistic
+    ? `Seu plano chega a um pico de ${peakWeeklyKm}km na semana, com treino longo de até ${peakLongRunKm}km — volume adequado para completar ${input.raceLabel} com segurança.`
+    : `O prazo até a prova é curto para o volume ideal (${idealPeakKm}km/semana): o plano vai te levar com segurança até ${peakWeeklyKm}km/semana e treino longo de ${peakLongRunKm}km. Isso é menos do que o ideal para ${input.raceLabel} — dá pra completar com uma pegada mais conservadora (inclusive com caminhada nos trechos finais), mas se puder, considere adiar a prova ou começar com mais tempo de antecedência da próxima vez.`;
+
+  return { peakWeeklyKm, peakLongRunKm, idealPeakWeeklyKm: idealPeakKm, realistic, note };
+}
+
 export function generatePlan(input: PlanInput): GeneratedPlan {
   const days = Math.min(6, Math.max(3, input.daysPerWeek));
   const runningSlots = RUNNING_DAY_TEMPLATES[days];
-  const peakKm = peakWeeklyKmFor(input.raceDistanceKm, input.level);
-  const startKm = Math.max(input.currentWeeklyKm > 0 ? input.currentWeeklyKm : peakKm * 0.4, days * 3);
+  const idealPeakKm = peakWeeklyKmFor(input.raceDistanceKm, input.level);
+  const startKm = Math.max(input.currentWeeklyKm > 0 ? input.currentWeeklyKm : idealPeakKm * 0.4, days * 3);
+  const weeklyVolumes = computeWeeklyVolumes(startKm, idealPeakKm, input.durationWeeks, days * 3);
+  const assessment = buildAssessment(weeklyVolumes, idealPeakKm, input);
 
   const weeks: GeneratedWeek[] = [];
   const workouts: GeneratedWorkout[] = [];
@@ -189,18 +264,7 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
   for (let weekNumber = 1; weekNumber <= input.durationWeeks; weekNumber++) {
     const phase = phaseForWeek(weekNumber, input.durationWeeks);
     const isRaceWeek = weekNumber === input.durationWeeks;
-    const progress = Math.min(1, (weekNumber - 1) / Math.max(1, input.durationWeeks - 2));
-    let weekKm = startKm + (peakKm - startKm) * progress;
-
-    if (phase === 'taper') {
-      const taperWeeks = Math.max(1, Math.round(input.durationWeeks * 0.1));
-      const weeksFromEnd = input.durationWeeks - weekNumber;
-      weekKm = peakKm * (weeksFromEnd === 0 ? 0.4 : 1 - (taperWeeks - weeksFromEnd) * 0.2);
-    } else if (isDeloadWeek(weekNumber)) {
-      weekKm *= 0.75;
-    }
-
-    weekKm = roundHalf(Math.max(weekKm, days * 3));
+    const weekKm = weeklyVolumes[weekNumber - 1];
 
     const weekStart = addDays(input.startDate, (weekNumber - 1) * 7);
     const weekEnd = addDays(weekStart, 6);
@@ -253,5 +317,5 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
     });
   }
 
-  return { weeks, workouts };
+  return { weeks, workouts, assessment };
 }

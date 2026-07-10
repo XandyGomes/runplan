@@ -21,11 +21,20 @@ const LEVELS = [
 
 const TOTAL_STEPS = 6;
 
+type Assessment = {
+  peakWeeklyKm: number;
+  peakLongRunKm: number;
+  idealPeakWeeklyKm: number;
+  realistic: boolean;
+  note: string;
+};
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
 
   const [raceOption, setRaceOption] = useState<RaceOption | null>(null);
   const [customKm, setCustomKm] = useState('10');
@@ -74,13 +83,37 @@ export default function OnboardingPage() {
         setSubmitting(false);
         return;
       }
-      router.push('/');
-      router.refresh();
+      setSubmitting(false);
+      setAssessment(data.assessment || null);
     } catch {
       setError('Erro de conexão. Tente novamente.');
       setSubmitting(false);
     }
   };
+
+  const goToPlan = () => {
+    router.push('/');
+    router.refresh();
+  };
+
+  if (assessment) {
+    return (
+      <div className={styles.wrap}>
+        <h1 className={styles.title}>{assessment.realistic ? 'Plano pronto! 🎯' : 'Plano pronto — com um alerta'}</h1>
+        <div className={`${styles.optionCard} ${styles.optionCardWide} ${!assessment.realistic ? styles.optionCardActive : ''}`} style={{ cursor: 'default', marginBottom: 16 }}>
+          <p style={{ margin: 0 }}>{assessment.note}</p>
+        </div>
+        <p className={styles.subtitle}>
+          Pico previsto: <b>{assessment.peakWeeklyKm}km/semana</b> · treino longo de até <b>{assessment.peakLongRunKm}km</b>
+        </p>
+        <div className={styles.footer}>
+          <button className="btn-primary" onClick={goToPlan}>
+            Ver meu plano
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrap}>
