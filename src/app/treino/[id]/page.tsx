@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { Workout } from '@/lib/types';
 import { WORKOUT_TYPE_COLORS, WORKOUT_TYPE_LABEL } from '@/lib/workoutTypes';
 import { getClientCookie } from '@/lib/cookies';
+import { STRENGTH_ROUTINES } from '@/lib/strengthExercises';
 import CoachMessage from '@/components/CoachMessage';
+import ExerciseIcon from '@/components/ExerciseIcon';
 import styles from './page.module.css';
 
 type RecentActivity = { id: string; name: string; distanceKm: number; movingTimeMin: number; startDate: string };
@@ -189,45 +191,66 @@ export default function WorkoutDetailPage() {
 
       <div className={styles.divider} />
 
-      <div className={styles.toggleRow}>
-        <h3>Detalhes</h3>
-        <div className={styles.toggle}>
-          <button
-            className={`${styles.toggleBtn} ${outdoorMode === 'ar_livre' ? styles.toggleBtnActive : ''}`}
-            onClick={() => setOutdoorMode('ar_livre')}
-          >
-            Ao ar livre
-          </button>
-          <button
-            className={`${styles.toggleBtn} ${outdoorMode === 'esteira' ? styles.toggleBtnActive : ''}`}
-            onClick={() => setOutdoorMode('esteira')}
-          >
-            Esteira
-          </button>
-        </div>
-      </div>
+      {workout.type === 'strength' ? (
+        <>
+          <h3 style={{ marginBottom: 4 }}>Exercícios</h3>
+          <p style={{ marginBottom: 16 }}>Bodyweight, sem equipamento. Descanse ~30-45s entre séries.</p>
+          {(STRENGTH_ROUTINES[workout.title] || []).map(exercise => (
+            <div key={exercise.name} className={styles.exerciseRow}>
+              <div className={styles.exerciseIcon}>
+                <ExerciseIcon icon={exercise.icon} />
+              </div>
+              <div className={styles.blockBody}>
+                <b>{exercise.name}</b>
+                <p className={styles.exerciseReps}>{exercise.reps}</p>
+                <p>{exercise.cue}</p>
+              </div>
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          <div className={styles.toggleRow}>
+            <h3>Detalhes</h3>
+            <div className={styles.toggle}>
+              <button
+                className={`${styles.toggleBtn} ${outdoorMode === 'ar_livre' ? styles.toggleBtnActive : ''}`}
+                onClick={() => setOutdoorMode('ar_livre')}
+              >
+                Ao ar livre
+              </button>
+              <button
+                className={`${styles.toggleBtn} ${outdoorMode === 'esteira' ? styles.toggleBtnActive : ''}`}
+                onClick={() => setOutdoorMode('esteira')}
+              >
+                Esteira
+              </button>
+            </div>
+          </div>
 
-      <div className={styles.block}>
-        <span className={styles.blockIcon}>▶</span>
-        <div className={styles.blockBody}>
-          <b>Alongamentos de aquecimento (2 min)</b>
-        </div>
-      </div>
+          <div className={styles.block}>
+            <span className={styles.blockIcon}>▶</span>
+            <div className={styles.blockBody}>
+              <b>Alongamentos de aquecimento (2 min)</b>
+            </div>
+          </div>
 
-      <div className={styles.block}>
-        <div className={styles.blockBar} style={{ background: `linear-gradient(180deg, ${colors.from}, ${colors.to})` }} />
-        <div className={styles.blockBody}>
-          <b>{workout.title}</b>
-          {workout.pace_guidance && <p>{workout.pace_guidance}</p>}
-        </div>
-      </div>
+          <div className={styles.block}>
+            <div className={styles.blockBar} style={{ background: `linear-gradient(180deg, ${colors.from}, ${colors.to})` }} />
+            <div className={styles.blockBody}>
+              <b>{workout.title}</b>
+              {workout.pace_guidance && <p>{workout.pace_guidance}</p>}
+            </div>
+          </div>
 
-      <div className={styles.block}>
-        <span className={styles.blockIcon}>▶</span>
-        <div className={styles.blockBody}>
-          <b>Alongamentos de desaquecimento (4 min)</b>
-        </div>
-      </div>
+          <div className={styles.block}>
+            <span className={styles.blockIcon}>▶</span>
+            <div className={styles.blockBody}>
+              <b>Alongamentos de desaquecimento (4 min)</b>
+            </div>
+          </div>
+        </>
+      )}
 
       <CoachMessage userName={userName} message={workout.ai_summary} />
 

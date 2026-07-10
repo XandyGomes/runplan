@@ -150,6 +150,37 @@
   font-size: 13px;
 }
 
+.exerciseRow {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.exerciseRow:last-of-type {
+  border-bottom: none;
+}
+
+.exerciseIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary-light);
+}
+
+.exerciseReps {
+  color: var(--primary-light) !important;
+  font-weight: 600;
+  font-size: 13px !important;
+  margin-bottom: 4px !important;
+}
+
 .expandRow {
   display: flex;
   align-items: center;
