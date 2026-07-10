@@ -1,0 +1,30 @@
+.wrap {
+  border-radius: var(--radius-lg);
+  padding: 48px 24px;
+  text-align: center;
+  background: radial-gradient(ellipse at top, rgba(74,124,255,0.35), rgba(11,14,20,0.2));
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: rgba(74,124,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.subtitle {
+  max-width: 280px;
+}

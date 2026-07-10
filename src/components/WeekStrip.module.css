@@ -1,0 +1,99 @@
+.wrap {
+  padding: 4px 20px 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.weekLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ring {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.navBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 100%;
+  border: 1px solid var(--border-active);
+  background: var(--bg-card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.dayLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+}
+
+.dayNumberWrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.daySelected {
+  background: #fff;
+  color: #0B0E14;
+}
+
+.dayToday:not(.daySelected) {
+  border: 1px solid var(--border-active);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 100%;
+}
+
+.dotPlaceholder {
+  width: 8px;
+  height: 8px;
+}

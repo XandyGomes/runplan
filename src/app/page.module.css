@@ -1,0 +1,104 @@
+.page {
+  padding-bottom: 120px;
+  min-height: 100dvh;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  background: var(--bg-card);
+  object-fit: cover;
+}
+
+.topBarSpacer {
+  flex: 1;
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.section {
+  padding: 20px 20px 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.cardsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.floatingBtn {
+  position: fixed;
+  bottom: 90px;
+  left: 20px;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #F2F3F7;
+  color: #0B0E14;
+  border: none;
+  padding: 16px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  gap: 20px;
+}
+
+.landingLogo {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+}
