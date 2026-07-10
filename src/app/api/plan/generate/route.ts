@@ -5,12 +5,13 @@ import { generatePlan, ExperienceLevel } from '@/lib/planEngine';
 
 export const dynamic = 'force-dynamic';
 
-function mondayOnOrAfter(date: Date): Date {
+/** Segunda-feira da semana atual (não a próxima) — garante que hoje sempre caia dentro da semana 1. */
+function mondayOfCurrentWeek(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   const day = d.getDay(); // 0=Dom .. 6=Sáb
-  const diff = (8 - day) % 7;
-  d.setDate(d.getDate() + diff);
+  const diff = (day + 6) % 7;
+  d.setDate(d.getDate() - diff);
   return d;
 }
 
@@ -45,11 +46,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Dados incompletos para gerar o plano.' }, { status: 400 });
   }
 
-  const startDate = mondayOnOrAfter(new Date());
+  const startDate = mondayOfCurrentWeek(new Date());
 
   let durationWeeks = durationWeeksInput ?? 9;
   if (raceDate) {
-    const weeksUntilRace = Math.round((new Date(raceDate).getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    const raceDateObj = new Date(`${raceDate}T00:00:00`);
+    const daysUntilRace = Math.round((raceDateObj.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+    // Semana em que a data da prova cai dentro da grade segunda-domingo que começa em startDate.
+    const weeksUntilRace = Math.floor(daysUntilRace / 7) + 1;
     durationWeeks = Math.min(26, Math.max(4, weeksUntilRace));
   }
   durationWeeks = Math.min(26, Math.max(4, durationWeeks));
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
     currentWeeklyKm: currentWeeklyKm || 0,
     startDate,
     includeStrength: includeStrength !== false,
+    raceDate,
   });
 
   // Arquiva plano ativo anterior, se existir.

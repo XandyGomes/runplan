@@ -11,6 +11,9 @@ export type PlanInput = {
   currentWeeklyKm: number;
   startDate: Date; // segunda-feira da semana 1
   includeStrength: boolean;
+  /** Data exata da prova (ISO yyyy-mm-dd). Se informada, o treino de prova usa essa data
+   *  em vez do domingo calculado da última semana — garante que bate com o que o atleta digitou. */
+  raceDate?: string;
 };
 
 export type GeneratedWorkout = {
@@ -206,7 +209,8 @@ export function generatePlan(input: PlanInput): GeneratedPlan {
 
     runningSlots.forEach((dayOffset, slotIndex) => {
       const built = buildWorkoutForSlot(slotIndex, runningSlots, phase, isRaceWeek, input, weekKm);
-      const date = toISODate(addDays(weekStart, dayOffset));
+      const isRaceDay = isRaceWeek && slotIndex === runningSlots.length - 1;
+      const date = isRaceDay && input.raceDate ? input.raceDate : toISODate(addDays(weekStart, dayOffset));
       const [low, high] = PACE_MIN_PER_KM[input.level];
       const paceForDuration = built.type === 'long' || built.type === 'easy' ? high : (low + high) / 2;
 

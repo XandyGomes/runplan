@@ -36,6 +36,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ wee
     currentWeeklyKm: 0,
     startDate: new Date(`${plan.start_date}T00:00:00`),
     includeStrength: plan.include_strength,
+    raceDate: plan.race_date || undefined,
   });
 
   const weekWorkouts = generated.workouts.filter(w => w.weekNumber === weekNumber);
