@@ -48,9 +48,11 @@ export default function WeekStrip({
   const todayISO = new Date().toISOString().slice(0, 10);
   const days = Array.from({ length: 7 }).map((_, i) => addDaysISO(weekStartDate, i));
 
+  // Um dia sem nenhum treino agendado é descanso de verdade — não tem checkbox pra
+  // marcar ali, então ele não pode impedir o anel de fechar 100%.
   const completedDays = days.filter(date => {
     const dw = workouts.filter(w => w.date === date && !w.skipped);
-    return dw.length > 0 && dw.every(w => w.completed_at);
+    return dw.length === 0 || dw.every(w => w.completed_at);
   }).length;
   const ringPct = Math.round((completedDays / 7) * 100);
 
