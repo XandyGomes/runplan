@@ -187,12 +187,7 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
                   onClick={() => router.push(`/treino/${w.id}`)}
                   onToggleComplete={() => toggleComplete(w.id)}
                 />
-                {w.linked_strava_activity_id && (
-                  <StravaActivityCard
-                    activityId={w.linked_strava_activity_id}
-                    onClick={() => router.push(`/treino/${w.id}`)}
-                  />
-                )}
+                {w.linked_strava_activity_id && <StravaActivityCard activityId={w.linked_strava_activity_id} />}
               </div>
             ))}
           </div>

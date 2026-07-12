@@ -1,30 +1,32 @@
 .card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 14px 16px;
   cursor: pointer;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
 .badge {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   flex-shrink: 0;
   background: linear-gradient(135deg, #FC4C02, #FF7A1A);
+}
+
+.loadingText {
+  font-size: 14px;
+  color: var(--text-2);
 }
 
 .headerText {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .headerLabel {
@@ -33,17 +35,55 @@
 }
 
 .headerName {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.chevron {
+  color: var(--text-2);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+}
+
 .statsRow {
   display: flex;
   justify-content: space-between;
-  margin-top: 14px;
 }
 
 .statLabel {
