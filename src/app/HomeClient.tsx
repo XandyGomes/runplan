@@ -21,6 +21,8 @@ function addDaysISO(iso: string, days: number) {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+type StravaActivitySummary = { id: string; distanceKm: number; movingTimeMin: number; startDate: string };
+
 export default function HomeClient({ userName, userPhoto }: { userName: string; userPhoto: string }) {
   const router = useRouter();
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -30,6 +32,7 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
   const [weekNumber, setWeekNumber] = useState(1);
   const [showAddRun, setShowAddRun] = useState(false);
   const [weather, setWeather] = useState<{ temp: number } | null>(null);
+  const [stravaActivities, setStravaActivities] = useState<StravaActivitySummary[]>([]);
 
   const applyPlanData = (data: { plan: Plan; workouts: Workout[] }) => {
     setPlan(data.plan);
@@ -65,10 +68,11 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
 
   useEffect(() => {
     fetch('/api/activities/sync', { method: 'POST' })
-      .then(() => fetch('/api/plan'))
-      .then(res => res.json())
-      .then(data => {
-        if (data.plan) applyPlanData(data);
+      .then(() => Promise.all([fetch('/api/plan'), fetch('/api/activities')]))
+      .then(([planRes, activitiesRes]) => Promise.all([planRes.json(), activitiesRes.json()]))
+      .then(([planData, activitiesData]) => {
+        if (planData.plan) applyPlanData(planData);
+        if (activitiesData.activities) setStravaActivities(activitiesData.activities);
       });
   }, []);
 
@@ -100,6 +104,20 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
   const weekWorkouts = useMemo(() => workouts.filter(w => w.week_number === weekNumber), [workouts, weekNumber]);
   const dayWorkouts = useMemo(() => workouts.filter(w => w.date === selectedDate && !w.skipped), [workouts, selectedDate]);
 
+  const linkedActivityIds = useMemo(
+    () => new Set(workouts.map(w => w.linked_strava_activity_id).filter((id): id is string => !!id)),
+    [workouts]
+  );
+  // Atividades do dia (ex.: caminhadas) que não foram vinculadas a nenhum treino do plano,
+  // mas que ainda assim aconteceram nesse dia e merecem aparecer na tela Hoje.
+  const extraDayActivities = useMemo(
+    () =>
+      stravaActivities.filter(
+        a => a.startDate.slice(0, 10) === selectedDate && !linkedActivityIds.has(a.id)
+      ),
+    [stravaActivities, selectedDate, linkedActivityIds]
+  );
+
   const toggleComplete = async (id: string) => {
     const w = workouts.find(x => x.id === id);
     if (!w) return;
@@ -129,7 +147,7 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
     );
   }
 
-  const isRest = dayWorkouts.length === 0;
+  const isRest = dayWorkouts.length === 0 && extraDayActivities.length === 0;
   const isToday = selectedDate === todayISO();
 
   return (
@@ -189,6 +207,9 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
                 />
                 {w.linked_strava_activity_id && <StravaActivityCard activityId={w.linked_strava_activity_id} />}
               </div>
+            ))}
+            {extraDayActivities.map(a => (
+              <StravaActivityCard key={a.id} activityId={a.id} />
             ))}
           </div>
         )}
