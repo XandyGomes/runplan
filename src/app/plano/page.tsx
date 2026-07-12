@@ -135,7 +135,17 @@ export default function PlanoPage() {
       </div>
 
       {viewMode === 'mes' ? (
-        <MonthView workouts={workouts} />
+        <MonthView
+          workouts={workouts}
+          onDayClick={date => {
+            const dayWorkouts = workouts.filter(w => w.date === date && !w.skipped);
+            if (dayWorkouts.length > 0) {
+              router.push(`/treino/${dayWorkouts[0].id}`);
+            } else {
+              setAddRunDate(date);
+            }
+          }}
+        />
       ) : (
         weeks.map(week => {
           const locked = subscriptionStatus === 'free' && week.weekNumber > 1;
@@ -175,7 +185,10 @@ export default function PlanoPage() {
                             background: `linear-gradient(180deg, ${WORKOUT_TYPE_COLORS[dayWorkouts[0].type].from}, ${WORKOUT_TYPE_COLORS[dayWorkouts[0].type].to})`,
                           }}
                         />
-                        <div className={styles.dayContent} onClick={() => router.push(`/treino/${dayWorkouts[0].id}`)}>
+                        <div
+                          className={`${styles.dayContent} pressable`}
+                          onClick={() => router.push(`/treino/${dayWorkouts[0].id}`)}
+                        >
                           <div className={styles.dayTitle}>{dayWorkouts[0].title}</div>
                           <div className={styles.dayMeta}>{WORKOUT_TYPE_LABEL[dayWorkouts[0].type]}</div>
                         </div>
@@ -190,7 +203,7 @@ export default function PlanoPage() {
               })}
 
               {locked && (
-                <div className={styles.lockOverlay} onClick={() => setShowPaywall(true)}>
+                <div className={`${styles.lockOverlay} pressable`} onClick={() => setShowPaywall(true)}>
                   <span className={styles.lockPill}>🔒 Assinar para desbloquear</span>
                 </div>
               )}
@@ -225,7 +238,7 @@ export default function PlanoPage() {
   );
 }
 
-function MonthView({ workouts }: { workouts: Workout[] }) {
+function MonthView({ workouts, onDayClick }: { workouts: Workout[]; onDayClick: (date: string) => void }) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -256,10 +269,10 @@ function MonthView({ workouts }: { workouts: Workout[] }) {
         </div>
       ))}
       {cells.map((date, i) => {
-        if (!date) return <div key={i} className={styles.monthCell} />;
+        if (!date) return <div key={i} className={`${styles.monthCell} ${styles.monthCellEmpty}`} />;
         const type = primaryTypeForDate(date);
         return (
-          <div key={date} className={styles.monthCell}>
+          <div key={date} className={`${styles.monthCell} pressable`} onClick={() => onDayClick(date)}>
             <span>{Number(date.slice(8, 10))}</span>
             {type ? (
               <span

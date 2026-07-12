@@ -233,7 +233,7 @@ export default function WorkoutDetailPage() {
       </div>
 
       {workout.ai_summary && (
-        <div className={styles.summaryCard} onClick={() => setShowSummarySheet(true)}>
+        <div className={`${styles.summaryCard} pressable`} onClick={() => setShowSummarySheet(true)}>
           <div className={styles.summaryIcon} />
           <div className={styles.summaryText}>{workout.ai_summary}</div>
           <span>›</span>
@@ -241,7 +241,7 @@ export default function WorkoutDetailPage() {
       )}
 
       {workout.linked_strava_activity_id && (
-        <div className={styles.summaryCard} onClick={openActivityDetail}>
+        <div className={`${styles.summaryCard} pressable`} onClick={openActivityDetail}>
           <div className={styles.summaryIcon} style={{ background: 'linear-gradient(135deg, #FC4C02, #FF7A1A)' }} />
           <div className={styles.summaryText}>Ver atividade registrada no Strava, com mapa e estatísticas reais</div>
           <span>›</span>
@@ -313,13 +313,13 @@ export default function WorkoutDetailPage() {
 
       <CoachMessage userName={userName} message={workout.ai_summary} />
 
-      <div className={styles.expandRow} onClick={() => setExpandedRoute(v => !v)}>
+      <div className={`${styles.expandRow} pressable`} onClick={() => setExpandedRoute(v => !v)}>
         <b>Encontrar uma rota</b>
         <span>{expandedRoute ? '−' : '+'}</span>
       </div>
       {expandedRoute && <p className={styles.expandBody}>Em breve: sugestões de rotas próximas com base na sua localização.</p>}
 
-      <div className={styles.expandRow} onClick={() => setExpandedNotes(v => !v)}>
+      <div className={`${styles.expandRow} pressable`} onClick={() => setExpandedNotes(v => !v)}>
         <b>Anotações de treinos</b>
         <span>{expandedNotes ? '−' : '+'}</span>
       </div>
@@ -385,7 +385,7 @@ export default function WorkoutDetailPage() {
             </div>
             {recentActivities.length === 0 && <p>Nenhuma corrida recente encontrada no Strava.</p>}
             {recentActivities.map(a => (
-              <div key={a.id} className={styles.activityOption} onClick={() => linkActivity(a.id)}>
+              <div key={a.id} className={`${styles.activityOption} pressable`} onClick={() => linkActivity(a.id)}>
                 <div>
                   <b>{a.name}</b>
                   <p style={{ margin: 0 }}>

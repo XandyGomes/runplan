@@ -58,7 +58,7 @@ export default function StravaActivityCard({ activityId }: { activityId: string 
 
   return (
     <>
-      <div className={styles.card} onClick={() => setShowSheet(true)}>
+      <div className={`${styles.card} pressable`} onClick={() => setShowSheet(true)}>
         <div className={styles.badge} />
         <div className={styles.headerText}>
           <span className={styles.headerLabel}>Registrado no Strava</span>

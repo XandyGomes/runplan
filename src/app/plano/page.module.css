@@ -110,6 +110,14 @@
 .dayContent {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.dayContent:active {
+  transform: scale(0.97);
+  background: var(--bg-card-hover);
 }
 
 .dayTitle {
@@ -141,6 +149,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lockOverlay:active {
+  background: rgba(11,14,20,0.75);
 }
 
 .lockPill {
@@ -174,6 +187,22 @@
   justify-content: center;
   gap: 4px;
   border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.monthCell:active {
+  transform: scale(0.9);
+  background: var(--bg-card-hover);
+}
+
+.monthCellEmpty {
+  cursor: default;
+}
+
+.monthCellEmpty:active {
+  transform: none;
+  background: transparent;
 }
 
 .monthCellMuted {

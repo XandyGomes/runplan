@@ -24,7 +24,7 @@ export default function WeekOverviewSheet({
 
   return (
     <>
-      <div className={styles.summaryCard} onClick={() => setOpen(true)}>
+      <div className={`${styles.summaryCard} pressable`} onClick={() => setOpen(true)}>
         <div className={styles.summaryHeader}>
           <span>Visão geral da semana {weekNumber}</span>
           <span>›</span>

@@ -70,6 +70,16 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Feedback de toque padrão: sem isso, tirar o tap-highlight nativo (acima) deixa
+   qualquer botão parecendo que o clique não registrou. Seletores de classe mais
+   específicos (ex.: .card:active, .btn-primary:active) continuam vencendo por cima disso. */
+button, .pressable {
+  transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease;
+}
+button:active:not(:disabled), .pressable:active {
+  transform: scale(0.95);
+}
+
 body {
   background:
     radial-gradient(ellipse 80% 40% at 50% -10%, rgba(20,201,168,0.08) 0%, transparent 60%),
