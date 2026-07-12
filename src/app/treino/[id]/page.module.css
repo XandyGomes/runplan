@@ -11,11 +11,22 @@
 }
 
 .iconBtn {
-  background: transparent;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 100%;
   color: var(--text);
   cursor: pointer;
-  padding: 4px;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.iconBtn:active {
+  transform: scale(0.92);
+  background: var(--bg-card-hover);
 }
 
 .topRight {

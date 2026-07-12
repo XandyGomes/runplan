@@ -194,11 +194,17 @@ export default function WorkoutDetailPage() {
     <div className={styles.page}>
       <div className={styles.topBar}>
         <button className={styles.iconBtn} onClick={() => router.back()} aria-label="Voltar">
-          ←
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
         </button>
         <div className={styles.topRight}>
           <button className={styles.iconBtn} onClick={() => setShowMenu(true)} aria-label="Mais opções">
-            •••
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="12" r="1.8" />
+              <circle cx="12" cy="12" r="1.8" />
+              <circle cx="19" cy="12" r="1.8" />
+            </svg>
           </button>
         </div>
       </div>
