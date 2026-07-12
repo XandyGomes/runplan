@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
 type RaceOption = { label: string; km: number };
@@ -12,6 +12,22 @@ const RACE_OPTIONS: RaceOption[] = [
   { label: 'Meia Maratona', km: 21.1 },
   { label: 'Maratona', km: 42.2 },
 ];
+
+/** Extrai o número de km de uma string de distância vinda das Corridas (ex: "21km (Meia)"). */
+function parseKm(distance: string): number | null {
+  const m = distance.match(/(\d+(?:[.,]\d+)?)/);
+  if (!m) return null;
+  const km = Number(m[1].replace(',', '.'));
+  return Number.isFinite(km) && km > 0 ? km : null;
+}
+
+function matchRaceOption(km: number): RaceOption | null {
+  if (km <= 6) return RACE_OPTIONS[0];
+  if (km <= 12) return RACE_OPTIONS[1];
+  if (km <= 25) return RACE_OPTIONS[2];
+  if (km >= 40) return RACE_OPTIONS[3];
+  return null;
+}
 
 const LEVELS = [
   { value: 'iniciante', label: 'Iniciante' },
@@ -29,18 +45,27 @@ type Assessment = {
   note: string;
 };
 
-export default function OnboardingPage() {
+function OnboardingInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Pré-preenchimento quando vem da tela de Corridas (?raceLabel=&distance=&date=).
+  const prefillLabel = searchParams.get('raceLabel') || '';
+  const prefillDistance = searchParams.get('distance') || '';
+  const prefillDate = searchParams.get('date') || '';
+  const prefillKm = prefillDistance ? parseKm(prefillDistance) : null;
+  const prefillOption = prefillKm ? matchRaceOption(prefillKm) : null;
+
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [coachNote, setCoachNote] = useState('');
 
-  const [raceOption, setRaceOption] = useState<RaceOption | null>(null);
-  const [customKm, setCustomKm] = useState('10');
-  const [hasRaceDate, setHasRaceDate] = useState<boolean | null>(null);
-  const [raceDate, setRaceDate] = useState('');
+  const [raceOption, setRaceOption] = useState<RaceOption | null>(prefillOption);
+  const [customKm, setCustomKm] = useState(prefillOption ? '10' : prefillKm ? String(prefillKm) : '10');
+  const [hasRaceDate, setHasRaceDate] = useState<boolean | null>(prefillDate ? true : null);
+  const [raceDate, setRaceDate] = useState(prefillDate);
   const [durationWeeks, setDurationWeeks] = useState(9);
   const [level, setLevel] = useState<string | null>(null);
   const [daysPerWeek, setDaysPerWeek] = useState(4);
@@ -49,7 +74,7 @@ export default function OnboardingPage() {
   const [coachContext, setCoachContext] = useState('');
 
   const raceKm = raceOption?.km ?? (Number(customKm) || 10);
-  const raceLabel = raceOption?.label ?? `${customKm}km`;
+  const raceLabel = raceOption?.label ?? (prefillLabel || `${customKm}km`);
 
   const canAdvance = () => {
     if (step === 0) return raceOption !== null || Number(customKm) > 0;
@@ -314,5 +339,13 @@ export default function OnboardingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className={styles.wrap}><p>Carregando...</p></div>}>
+      <OnboardingInner />
+    </Suspense>
   );
 }

@@ -8,8 +8,8 @@ const navItems = [
   { href: '/', icon: 'sun', label: 'Hoje' },
   { href: '/plano', icon: 'clipboard', label: 'Plano' },
   { href: '/atividades', icon: 'chart', label: 'Atividades' },
-  { href: '/comunidade', icon: 'users', label: 'Comunidade' },
-  { href: '/suporte', icon: 'book', label: 'Suporte' },
+  { href: '/corridas', icon: 'flag', label: 'Corridas' },
+  { href: '/treinador', icon: 'coach', label: 'Treinador' },
 ];
 
 const SVG: Record<string, React.ReactElement> = {
@@ -28,14 +28,14 @@ const SVG: Record<string, React.ReactElement> = {
       <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
     </svg>
   ),
-  users: (
+  flag: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
     </svg>
   ),
-  book: (
+  coach: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
     </svg>
   ),
 };

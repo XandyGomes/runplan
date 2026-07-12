@@ -42,9 +42,27 @@ create table if not exists workouts (
   created_at timestamptz not null default now()
 );
 
+-- Corridas/provas do atleta (calendário + retirada de kit).
+-- Tabela compartilhada com o app Aura Run (mesma conta Supabase): usa athlete_id
+-- numérico (ID do atleta no Strava), então o RunPlan reaproveita os dados já existentes.
+create table if not exists races (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id bigint not null,
+  name text not null,
+  date date not null,
+  distance text,
+  city text,
+  goal_time text,
+  notes text,
+  kit_date date,
+  status text not null default 'upcoming',
+  created_at timestamptz not null default now()
+);
+
 create index if not exists workouts_plan_id_idx on workouts(plan_id);
 create index if not exists workouts_date_idx on workouts(date);
 create index if not exists plans_athlete_idx on plans(strava_athlete_id);
+create index if not exists races_athlete_idx on races(athlete_id);
 
 alter table profiles enable row level security;
 alter table plans enable row level security;
@@ -61,3 +79,7 @@ create policy "service access plans" on plans for all using (true) with check (t
 
 drop policy if exists "service access workouts" on workouts;
 create policy "service access workouts" on workouts for all using (true) with check (true);
+
+alter table races enable row level security;
+drop policy if exists "service access races" on races;
+create policy "service access races" on races for all using (true) with check (true);
