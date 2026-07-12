@@ -67,7 +67,10 @@ export async function POST() {
     .not('linked_strava_activity_id', 'is', null);
   const linkedIds = new Set((alreadyLinked || []).map(w => w.linked_strava_activity_id));
 
-  const runs = activities.filter(a => (a.type === 'Run' || a.sport_type === 'Run') && !linkedIds.has(String(a.id)));
+  const linkableTypes = new Set(['Run', 'Walk', 'Hike']);
+  const runs = activities.filter(
+    a => (linkableTypes.has(a.type) || linkableTypes.has(a.sport_type)) && !linkedIds.has(String(a.id))
+  );
 
   const { data: openWorkouts } = await supabase
     .from('workouts')

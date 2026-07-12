@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const activities = await getActivitiesWithRefresh(30);
+    const linkableTypes = new Set(['Run', 'Walk', 'Hike']);
     const runs = activities
-      .filter((a: any) => a.type === 'Run' || a.sport_type === 'Run')
+      .filter((a: any) => linkableTypes.has(a.type) || linkableTypes.has(a.sport_type))
       .map((a: any) => ({
         id: String(a.id),
         name: a.name,
