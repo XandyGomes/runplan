@@ -1,59 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getAthleteId } from '@/lib/session';
-import { callAI } from '@/lib/ai';
-import { generatePlan, ExperienceLevel, GeneratedPlan } from '@/lib/planEngine';
+import { generatePlan, ExperienceLevel } from '@/lib/planEngine';
+import { mondayOfCurrentWeek, reviewPlanWithAI } from '@/lib/planReview';
 
 export const dynamic = 'force-dynamic';
-
-/** Segunda-feira da semana atual (não a próxima) — garante que hoje sempre caia dentro da semana 1. */
-function mondayOfCurrentWeek(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=Dom .. 6=Sáb
-  const diff = (day + 6) % 7;
-  d.setDate(d.getDate() - diff);
-  return d;
-}
-
-/**
- * Manda o plano JÁ CALCULADO (determinístico) pra IA revisar como um treinador
- * revisaria um rascunho — a IA nunca inventa números novos, só analisa os que
- * o motor de periodização já validou como seguros e escreve uma devolutiva real.
- */
-async function reviewPlanWithAI(
-  generated: GeneratedPlan,
-  input: { raceLabel: string; level: string; daysPerWeek: number; durationWeeks: number; currentWeeklyKm: number },
-  coachContext?: string
-): Promise<string | null> {
-  const phaseSummary = generated.weeks
-    .map(w => `Semana ${w.weekNumber} (${w.phase}): ${w.totalKm}km`)
-    .join('\n');
-
-  const prompt = `Você é um treinador de corrida especialista revisando um plano que já foi calculado por um sistema de periodização (regra de crescimento de ~8%/semana, descarga a cada 4 semanas, taper no final). Os números abaixo JÁ são seguros e definitivos — não invente nem sugira números diferentes, sua função é dar uma devolutiva de treinador sobre esse plano específico.
-
-Objetivo: ${input.raceLabel}
-Nível informado: ${input.level}
-Dias de corrida por semana: ${input.daysPerWeek}
-Duração do plano: ${input.durationWeeks} semanas
-Volume semanal atual do atleta: ${input.currentWeeklyKm}km
-
-Progressão semanal calculada:
-${phaseSummary}
-
-Avaliação automática do sistema: pico de ${generated.assessment.peakWeeklyKm}km/semana, treino longo de até ${generated.assessment.peakLongRunKm}km (ideal seria ${generated.assessment.idealPeakWeeklyKm}km/semana). Considerado ${generated.assessment.realistic ? 'adequado' : 'abaixo do ideal para a distância, mas seguro'}.
-${coachContext ? `\nO atleta contou o seguinte contexto: "${coachContext}"` : ''}
-
-Escreva uma devolutiva curta (3 a 5 frases, português do Brasil, tom de treinador experiente e direto) comentando esse plano específico. ${coachContext ? 'Responda diretamente ao contexto que o atleta contou, com orientação prática.' : ''} Se o plano estiver abaixo do ideal, explique como abordar a prova com segurança (ex: ritmo mais conservador, pausas para caminhada). Não repita os números de forma robótica — fale como um treinador de verdade falaria com o atleta.`;
-
-  try {
-    const text = await callAI([{ role: 'user', content: prompt }], 350);
-    return text.trim();
-  } catch (err: any) {
-    console.warn('[Plan] Falha ao gerar revisão da IA:', err.message);
-    return null;
-  }
-}
 
 export async function POST(request: Request) {
   const athleteId = await getAthleteId();
@@ -115,22 +66,31 @@ export async function POST(request: Request) {
   // Arquiva plano ativo anterior, se existir.
   await supabase.from('plans').update({ status: 'archived' }).eq('strava_athlete_id', athleteId).eq('status', 'active');
 
-  const { data: plan, error: planError } = await supabase
-    .from('plans')
-    .insert({
-      strava_athlete_id: athleteId,
-      race_distance_km: raceDistanceKm,
-      race_label: raceLabel,
-      race_date: raceDate || null,
-      start_date: startDate.toISOString().slice(0, 10),
-      level,
-      days_per_week: daysPerWeek,
-      duration_weeks: durationWeeks,
-      include_strength: includeStrength !== false,
-      status: 'active',
-    })
-    .select()
-    .single();
+  const planRow = {
+    strava_athlete_id: athleteId,
+    race_distance_km: raceDistanceKm,
+    race_label: raceLabel,
+    race_date: raceDate || null,
+    start_date: startDate.toISOString().slice(0, 10),
+    level,
+    days_per_week: daysPerWeek,
+    duration_weeks: durationWeeks,
+    include_strength: includeStrength !== false,
+    // Guardado pra "Redefinir semana" conseguir recalcular a MESMA progressão depois —
+    // sem isso o reset caía sempre pra uma curva partindo de 0km/semana.
+    current_weekly_km: currentWeeklyKm || 0,
+    status: 'active',
+  };
+
+  let { data: plan, error: planError } = await supabase.from('plans').insert(planRow).select().single();
+
+  // Fallback só até a migração (supabase/schema.sql) que adiciona a coluna
+  // current_weekly_km ser aplicada no banco em produção.
+  if (planError?.message?.includes('current_weekly_km')) {
+    const { current_weekly_km, ...legacyRow } = planRow;
+    void current_weekly_km;
+    ({ data: plan, error: planError } = await supabase.from('plans').insert(legacyRow).select().single());
+  }
 
   if (planError || !plan) {
     return NextResponse.json({ error: planError?.message || 'Erro ao criar o plano.' }, { status: 500 });

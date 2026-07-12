@@ -33,7 +33,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ wee
     level: plan.level as ExperienceLevel,
     daysPerWeek: plan.days_per_week,
     durationWeeks: plan.duration_weeks,
-    currentWeeklyKm: 0,
+    // Precisa ser o MESMO valor usado quando o plano foi gerado, senão a progressão
+    // recalculada parte de um ponto diferente e as distâncias da semana não batem
+    // com o resto do plano.
+    currentWeeklyKm: plan.current_weekly_km || 0,
     startDate: new Date(`${plan.start_date}T00:00:00`),
     includeStrength: plan.include_strength,
     raceDate: plan.race_date || undefined,

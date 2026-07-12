@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
+import ActivityMap from '@/components/ActivityMap';
 import styles from './page.module.css';
 
 type Activity = {
@@ -13,6 +14,18 @@ type Activity = {
   movingTimeMin: number;
   elevationGain: number;
   startDate: string;
+};
+
+type ActivityDetail = {
+  id: string;
+  name: string;
+  distanceKm: number;
+  movingTimeMin: number;
+  elevationGain: number;
+  avgHeartrate: number | null;
+  calories: number | null;
+  startDate: string;
+  route: [number, number][];
 };
 
 function formatDate(iso: string) {
@@ -31,6 +44,11 @@ export default function AtividadesPage() {
   const router = useRouter();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Activity | null>(null);
+  const [detail, setDetail] = useState<ActivityDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const detailCache = useRef(new Map<string, ActivityDetail>());
 
   useEffect(() => {
     fetch('/api/activities')
@@ -56,6 +74,36 @@ export default function AtividadesPage() {
     };
   }, [activities]);
 
+  const openDetail = (activity: Activity) => {
+    setSelected(activity);
+    setDetailError('');
+    const cached = detailCache.current.get(activity.id);
+    if (cached) {
+      setDetail(cached);
+      return;
+    }
+    setDetail(null);
+    setLoadingDetail(true);
+    fetch(`/api/activities/${activity.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setDetailError(data.error);
+        } else {
+          detailCache.current.set(activity.id, data);
+          setDetail(data);
+        }
+      })
+      .catch(() => setDetailError('Erro de conexão ao buscar a atividade.'))
+      .finally(() => setLoadingDetail(false));
+  };
+
+  const closeDetail = () => {
+    setSelected(null);
+    setDetail(null);
+    setDetailError('');
+  };
+
   return (
     <div className={styles.page}>
       <h1 style={{ marginBottom: 20 }}>Atividades</h1>
@@ -78,7 +126,7 @@ export default function AtividadesPage() {
       ) : (
         <div className={styles.list}>
           {activities.map(a => (
-            <div key={a.id} className={styles.item}>
+            <div key={a.id} className={`${styles.item} pressable`} onClick={() => openDetail(a)}>
               <div className={styles.itemHeader}>
                 <span className={styles.itemName}>{a.name}</span>
                 <span className={styles.itemDate}>{formatDate(a.startDate)}</span>
@@ -101,6 +149,62 @@ export default function AtividadesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {selected && (
+        <div className={styles.overlay} onClick={closeDetail}>
+          <div className={styles.sheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.sheetHeader}>
+              <h2>{detail?.name || selected.name}</h2>
+              <button className={styles.closeBtn} onClick={closeDetail}>✕</button>
+            </div>
+
+            {loadingDetail && <p>Carregando atividade do Strava...</p>}
+            {detailError && <p style={{ color: 'var(--error)' }}>{detailError}</p>}
+
+            {detail && (
+              <>
+                {detail.route.length > 0 && <ActivityMap route={detail.route} />}
+                <div className={styles.statsRow} style={{ marginTop: 20 }}>
+                  <div>
+                    <div className={styles.statLabel}>Distância</div>
+                    <div className={styles.statValue}>{detail.distanceKm}km</div>
+                  </div>
+                  <div>
+                    <div className={styles.statLabel}>Tempo</div>
+                    <div className={styles.statValue}>{detail.movingTimeMin}min</div>
+                  </div>
+                  <div>
+                    <div className={styles.statLabel}>Ritmo médio</div>
+                    <div className={styles.statValue}>{formatPace(detail.distanceKm, detail.movingTimeMin)}</div>
+                  </div>
+                </div>
+                {(detail.elevationGain > 0 || detail.avgHeartrate || detail.calories) && (
+                  <div className={styles.statsRow} style={{ marginTop: 12 }}>
+                    {detail.elevationGain > 0 && (
+                      <div>
+                        <div className={styles.statLabel}>Elevação</div>
+                        <div className={styles.statValue}>{detail.elevationGain}m</div>
+                      </div>
+                    )}
+                    {detail.avgHeartrate && (
+                      <div>
+                        <div className={styles.statLabel}>FC média</div>
+                        <div className={styles.statValue}>{detail.avgHeartrate}bpm</div>
+                      </div>
+                    )}
+                    {detail.calories && (
+                      <div>
+                        <div className={styles.statLabel}>Calorias</div>
+                        <div className={styles.statValue}>{detail.calories}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 

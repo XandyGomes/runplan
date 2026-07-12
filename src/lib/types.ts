@@ -28,5 +28,6 @@ export type Plan = {
   days_per_week: number;
   duration_weeks: number;
   include_strength: boolean;
+  current_weekly_km: number;
   status: string;
 };

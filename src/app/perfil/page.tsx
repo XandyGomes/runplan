@@ -14,6 +14,8 @@ export default function PerfilPage() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'premium'>('free');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [renewing, setRenewing] = useState(false);
+  const [renewMessage, setRenewMessage] = useState('');
 
   useEffect(() => {
     fetch('/api/plan')
@@ -30,6 +32,25 @@ export default function PerfilPage() {
         if (data) setSubscriptionStatus(data.subscriptionStatus);
       });
   }, []);
+
+  const renewPlan = async () => {
+    if (!confirm('Isso recalcula os treinos que você ainda não fez, mantendo o mesmo objetivo. O que já foi concluído não é apagado. Continuar?')) return;
+    setRenewing(true);
+    setRenewMessage('');
+    try {
+      const res = await fetch('/api/plan/renew', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setRenewMessage(data.error || 'Erro ao renovar o plano.');
+      } else {
+        setRenewMessage(`Plano renovado — ${data.renewed} treino(s) futuro(s) recalculado(s).`);
+      }
+    } catch {
+      setRenewMessage('Erro de conexão ao renovar o plano.');
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   const downgradeToFree = async () => {
     await fetch('/api/subscription', {
@@ -62,9 +83,18 @@ export default function PerfilPage() {
       {plan && (
         <div className="glass-card" style={{ marginBottom: 16 }}>
           <h3 style={{ marginBottom: 8 }}>Objetivo atual</h3>
-          <p>
+          <p style={{ marginBottom: 12 }}>
             {plan.race_label} · {plan.duration_weeks} semanas · nível {plan.level}
           </p>
+          <button className="btn-secondary" style={{ width: '100%' }} onClick={renewPlan} disabled={renewing}>
+            {renewing ? 'Renovando...' : '↻ Renovar plano atual'}
+          </button>
+          <p style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>
+            Recalcula só os treinos que faltam, com o mesmo objetivo — não apaga o que você já concluiu.
+          </p>
+          {renewMessage && (
+            <p style={{ fontSize: 12, marginTop: 8, marginBottom: 0, color: 'var(--primary)' }}>{renewMessage}</p>
+          )}
         </div>
       )}
 
@@ -92,8 +122,13 @@ export default function PerfilPage() {
         />
       )}
 
-      <button className="btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={() => router.push('/onboarding')}>
+      <button className="btn-primary" style={{ width: '100%', marginBottom: 4 }} onClick={() => router.push('/onboarding')}>
         Gerar novo plano
+      </button>
+      <p style={{ fontSize: 12, marginBottom: 12 }}>Substitui totalmente o plano atual — use se mudou de objetivo de prova.</p>
+
+      <button className="btn-secondary" style={{ width: '100%', marginBottom: 12 }} onClick={() => router.push('/simular')}>
+        Simular outro plano (sem substituir)
       </button>
 
       <form action="/api/auth/logout" method="POST">

@@ -20,9 +20,16 @@ create table if not exists plans (
   days_per_week int not null,
   duration_weeks int not null,
   include_strength boolean not null default true,
+  current_weekly_km numeric not null default 0,
   status text not null default 'active' check (status in ('active', 'archived')),
   created_at timestamptz not null default now()
 );
+
+-- Migração (2026-07-12): planos criados antes desta coluna existir não tinham como
+-- guardar o km/semana inicial do atleta — por isso o "Redefinir semana" recalculava a
+-- progressão a partir de 0km/semana (sempre), dando distâncias diferentes das originais.
+-- Rode isto uma vez se a tabela `plans` já existir sem a coluna:
+alter table plans add column if not exists current_weekly_km numeric not null default 0;
 
 create table if not exists workouts (
   id uuid primary key default gen_random_uuid(),

@@ -37,7 +37,15 @@ export default function TreinadorPage() {
   const [messages, setMessages] = useState<Message[]>([INTRO]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/plan')
+      .then(res => (res.status === 401 ? null : res.json()))
+      .then(data => setHasPlan(!!data?.plan))
+      .catch(() => setHasPlan(false));
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,7 +85,10 @@ export default function TreinadorPage() {
           <h1>Aura · Treinadora IA</h1>
           <p className={styles.status}>● Online · histórico e plano carregados</p>
         </div>
-        <button className={`${styles.newPlanBtn} pressable`} onClick={() => router.push('/onboarding')}>
+        <button
+          className={`${styles.newPlanBtn} pressable`}
+          onClick={() => router.push(hasPlan ? '/simular' : '/onboarding')}
+        >
           + Plano
         </button>
       </div>

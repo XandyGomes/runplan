@@ -37,7 +37,9 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
   const applyPlanData = (data: { plan: Plan; workouts: Workout[] }) => {
     setPlan(data.plan);
     setWorkouts(data.workouts);
-    const daysDiff = Math.round((Date.now() - new Date(`${data.plan.start_date}T00:00:00`).getTime()) / 86400000);
+    // floor (não round) — arredondar pra cima empurrava a semana pra frente sempre que
+    // já era tarde no último dia da semana (ex: domingo à noite virava "semana seguinte").
+    const daysDiff = Math.floor((Date.now() - new Date(`${data.plan.start_date}T00:00:00`).getTime()) / 86400000);
     const wn = Math.min(data.plan.duration_weeks, Math.max(1, Math.floor(daysDiff / 7) + 1));
     setWeekNumber(wn);
     setLoading(false);
