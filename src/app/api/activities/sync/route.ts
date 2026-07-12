@@ -6,6 +6,30 @@ export const dynamic = 'force-dynamic';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Data local (yyyy-mm-dd) de uma atividade do Strava, sem depender de fuso do servidor. */
+function activityLocalDate(activity: any): string {
+  const raw = activity.start_date_local || activity.start_date;
+  return String(raw).slice(0, 10);
+}
+
+/**
+ * Uma atividade só é candidata a um treino se caiu no MESMO dia (não ±1 dia — isso já
+ * causou vínculo errado de corridas de dias diferentes) e, quando o treino tem distância
+ * planejada, se a distância real está numa faixa plausível pra aquele treino (evita linkar
+ * uma corrida curta não relacionada a um treino longo do mesmo dia).
+ */
+function isPlausibleMatch(workout: any, activity: any): boolean {
+  if (activityLocalDate(activity) !== workout.date) return false;
+
+  if (workout.distance_km) {
+    const activityKm = activity.distance / 1000;
+    const tolerance = Math.max(workout.distance_km * 0.4, 2); // 40% ou 2km, o que for maior
+    if (Math.abs(activityKm - workout.distance_km) > tolerance) return false;
+  }
+
+  return true;
+}
+
 export async function POST() {
   const athleteId = await getAthleteId();
   if (!athleteId) {
@@ -33,7 +57,17 @@ export async function POST() {
     return NextResponse.json({ matched: 0, error: 'Não foi possível buscar atividades do Strava.' });
   }
 
-  const runs = activities.filter(a => a.type === 'Run' || a.sport_type === 'Run');
+  // Atividades já vinculadas a QUALQUER treino deste plano não podem ser reaproveitadas
+  // num vínculo automático futuro — sem isso, a mesma corrida podia acabar linkada em
+  // mais de um treino em execuções separadas do sync.
+  const { data: alreadyLinked } = await supabase
+    .from('workouts')
+    .select('linked_strava_activity_id')
+    .eq('plan_id', plan.id)
+    .not('linked_strava_activity_id', 'is', null);
+  const linkedIds = new Set((alreadyLinked || []).map(w => w.linked_strava_activity_id));
+
+  const runs = activities.filter(a => (a.type === 'Run' || a.sport_type === 'Run') && !linkedIds.has(String(a.id)));
 
   const { data: openWorkouts } = await supabase
     .from('workouts')
@@ -46,11 +80,7 @@ export async function POST() {
 
   let matched = 0;
   for (const workout of openWorkouts || []) {
-    const workoutTime = new Date(`${workout.date}T00:00:00`).getTime();
-    const candidate = runs.find(a => {
-      const activityTime = new Date(a.start_date_local || a.start_date).getTime();
-      return Math.abs(activityTime - workoutTime) <= DAY_MS;
-    });
+    const candidate = runs.find(a => isPlausibleMatch(workout, a));
 
     if (candidate) {
       await supabase

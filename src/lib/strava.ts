@@ -50,6 +50,17 @@ export const getActivities = async (accessToken: string, perPage: number = 100, 
   return response.json();
 };
 
+/** Detalhe completo de UMA atividade — inclui o polyline da rota (não vem na listagem). */
+export const getActivityDetail = async (accessToken: string, activityId: string) => {
+  const response = await fetch(`https://www.strava.com/api/v3/activities/${activityId}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch activity detail: ${response.status}`);
+  }
+  return response.json();
+};
+
 export const refreshAccessToken = async (refreshToken: string) => {
   const response = await fetch('https://www.strava.com/oauth/token', {
     method: 'POST',

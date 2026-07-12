@@ -8,9 +8,30 @@ import { getClientCookie } from '@/lib/cookies';
 import { STRENGTH_ROUTINES } from '@/lib/strengthExercises';
 import CoachMessage from '@/components/CoachMessage';
 import ExerciseIcon from '@/components/ExerciseIcon';
+import ActivityMap from '@/components/ActivityMap';
 import styles from './page.module.css';
 
 type RecentActivity = { id: string; name: string; distanceKm: number; movingTimeMin: number; startDate: string };
+
+type ActivityDetail = {
+  id: string;
+  name: string;
+  distanceKm: number;
+  movingTimeMin: number;
+  elevationGain: number;
+  avgHeartrate: number | null;
+  calories: number | null;
+  startDate: string;
+  route: [number, number][];
+};
+
+function formatPace(distanceKm: number, movingTimeMin: number) {
+  if (!distanceKm) return '--';
+  const paceMin = movingTimeMin / distanceKm;
+  const min = Math.floor(paceMin);
+  const sec = Math.round((paceMin - min) * 60);
+  return `${min}:${sec.toString().padStart(2, '0')}/km`;
+}
 
 function formatDateLong(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
@@ -39,6 +60,10 @@ export default function WorkoutDetailPage() {
   const [showMenu, setShowMenu] = useState(false);
   const [showLinkActivity, setShowLinkActivity] = useState(false);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [showActivitySheet, setShowActivitySheet] = useState(false);
+  const [activityDetail, setActivityDetail] = useState<ActivityDetail | null>(null);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activityError, setActivityError] = useState('');
 
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionSeconds, setSessionSeconds] = useState(0);
@@ -90,6 +115,26 @@ export default function WorkoutDetailPage() {
       setWorkout({ ...workout, ai_summary: data.ai_summary });
     }
     setRefreshingSummary(false);
+  };
+
+  const openActivityDetail = async () => {
+    if (!workout?.linked_strava_activity_id) return;
+    setShowActivitySheet(true);
+    if (activityDetail) return;
+    setLoadingActivity(true);
+    setActivityError('');
+    try {
+      const res = await fetch(`/api/activities/${workout.linked_strava_activity_id}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setActivityError(data.error || 'Não foi possível carregar a atividade.');
+      } else {
+        setActivityDetail(data);
+      }
+    } catch {
+      setActivityError('Erro de conexão ao buscar a atividade.');
+    }
+    setLoadingActivity(false);
   };
 
   const openLinkActivity = async () => {
@@ -185,6 +230,14 @@ export default function WorkoutDetailPage() {
         <div className={styles.summaryCard} onClick={() => setShowSummarySheet(true)}>
           <div className={styles.summaryIcon} />
           <div className={styles.summaryText}>{workout.ai_summary}</div>
+          <span>›</span>
+        </div>
+      )}
+
+      {workout.linked_strava_activity_id && (
+        <div className={styles.summaryCard} onClick={openActivityDetail}>
+          <div className={styles.summaryIcon} style={{ background: 'linear-gradient(135deg, #FC4C02, #FF7A1A)' }} />
+          <div className={styles.summaryText}>Ver atividade registrada no Strava, com mapa e estatísticas reais</div>
           <span>›</span>
         </div>
       )}
@@ -336,6 +389,60 @@ export default function WorkoutDetailPage() {
                 <span>›</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showActivitySheet && (
+        <div className={styles.sheetOverlay} onClick={() => setShowActivitySheet(false)}>
+          <div className={styles.sheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.sheetHeader}>
+              <h2>{activityDetail?.name || 'Atividade do Strava'}</h2>
+              <button className={styles.closeBtn} onClick={() => setShowActivitySheet(false)}>✕</button>
+            </div>
+
+            {loadingActivity && <p>Carregando atividade do Strava...</p>}
+            {activityError && <p style={{ color: 'var(--error)' }}>{activityError}</p>}
+
+            {activityDetail && (
+              <>
+                <ActivityMap route={activityDetail.route} />
+                <div className={styles.statsRow} style={{ marginTop: 20 }}>
+                  <div>
+                    <div className={styles.statLabel}>Distância</div>
+                    <div className={styles.statValue}>{activityDetail.distanceKm}km</div>
+                  </div>
+                  <div>
+                    <div className={styles.statLabel}>Tempo</div>
+                    <div className={styles.statValue}>{activityDetail.movingTimeMin}min</div>
+                  </div>
+                  <div>
+                    <div className={styles.statLabel}>Ritmo médio</div>
+                    <div className={styles.statValue}>{formatPace(activityDetail.distanceKm, activityDetail.movingTimeMin)}</div>
+                  </div>
+                </div>
+                <div className={styles.statsRow} style={{ marginTop: 12 }}>
+                  {activityDetail.elevationGain > 0 && (
+                    <div>
+                      <div className={styles.statLabel}>Elevação</div>
+                      <div className={styles.statValue}>{activityDetail.elevationGain}m</div>
+                    </div>
+                  )}
+                  {activityDetail.avgHeartrate && (
+                    <div>
+                      <div className={styles.statLabel}>FC média</div>
+                      <div className={styles.statValue}>{activityDetail.avgHeartrate}bpm</div>
+                    </div>
+                  )}
+                  {activityDetail.calories && (
+                    <div>
+                      <div className={styles.statLabel}>Calorias</div>
+                      <div className={styles.statValue}>{activityDetail.calories}</div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
