@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Plan, Workout } from '@/lib/types';
 import WeekStrip from '@/components/WeekStrip';
 import WorkoutCard from '@/components/WorkoutCard';
+import StravaActivityCard from '@/components/StravaActivityCard';
 import RestDayCard from '@/components/RestDayCard';
 import WeekOverviewSheet from '@/components/WeekOverviewSheet';
 import AddRunModal from '@/components/AddRunModal';
@@ -180,12 +181,19 @@ export default function HomeClient({ userName, userPhoto }: { userName: string; 
         ) : (
           <div className={styles.cardsStack}>
             {dayWorkouts.map(w => (
-              <WorkoutCard
-                key={w.id}
-                workout={w}
-                onClick={() => router.push(`/treino/${w.id}`)}
-                onToggleComplete={() => toggleComplete(w.id)}
-              />
+              <div key={w.id} className={styles.cardsStack}>
+                <WorkoutCard
+                  workout={w}
+                  onClick={() => router.push(`/treino/${w.id}`)}
+                  onToggleComplete={() => toggleComplete(w.id)}
+                />
+                {w.linked_strava_activity_id && (
+                  <StravaActivityCard
+                    activityId={w.linked_strava_activity_id}
+                    onClick={() => router.push(`/treino/${w.id}`)}
+                  />
+                )}
+              </div>
             ))}
           </div>
         )}

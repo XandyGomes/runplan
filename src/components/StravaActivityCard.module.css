@@ -1,0 +1,58 @@
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #FC4C02, #FF7A1A);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.headerLabel {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.headerName {
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 800;
+}
