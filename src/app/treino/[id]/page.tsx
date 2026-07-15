@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Workout } from '@/lib/types';
 import { WORKOUT_TYPE_COLORS, WORKOUT_TYPE_LABEL } from '@/lib/workoutTypes';
 import { getClientCookie } from '@/lib/cookies';
-import { STRENGTH_ROUTINES } from '@/lib/strengthExercises';
+import { STRENGTH_ROUTINES, Exercise } from '@/lib/strengthExercises';
 import CoachMessage from '@/components/CoachMessage';
 import ExerciseIcon from '@/components/ExerciseIcon';
 import ActivityMap from '@/components/ActivityMap';
@@ -64,6 +64,7 @@ export default function WorkoutDetailPage() {
   const [activityDetail, setActivityDetail] = useState<ActivityDetail | null>(null);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [activityError, setActivityError] = useState('');
+  const [openExercise, setOpenExercise] = useState<Exercise | null>(null);
 
   const [sessionStarted, setSessionStarted] = useState(false);
   const [sessionSeconds, setSessionSeconds] = useState(0);
@@ -255,7 +256,11 @@ export default function WorkoutDetailPage() {
           <h3 style={{ marginBottom: 4 }}>Exercícios</h3>
           <p style={{ marginBottom: 16 }}>Bodyweight, sem equipamento. Descanse ~30-45s entre séries.</p>
           {(STRENGTH_ROUTINES[workout.title] || []).map(exercise => (
-            <div key={exercise.name} className={styles.exerciseRow}>
+            <div
+              key={exercise.name}
+              className={`${styles.exerciseRow} pressable`}
+              onClick={() => setOpenExercise(exercise)}
+            >
               <div className={styles.exerciseIcon}>
                 <ExerciseIcon icon={exercise.icon} />
               </div>
@@ -264,6 +269,7 @@ export default function WorkoutDetailPage() {
                 <p className={styles.exerciseReps}>{exercise.reps}</p>
                 <p>{exercise.cue}</p>
               </div>
+              <span className={styles.exerciseChevron}>›</span>
             </div>
           ))}
         </>
@@ -449,6 +455,36 @@ export default function WorkoutDetailPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {openExercise && (
+        <div className={styles.sheetOverlay} onClick={() => setOpenExercise(null)}>
+          <div className={styles.sheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.sheetHeader}>
+              <h2>{openExercise.name}</h2>
+              <button className={styles.closeBtn} onClick={() => setOpenExercise(null)}>✕</button>
+            </div>
+
+            <div className={styles.exerciseDetailIcon}>
+              <ExerciseIcon icon={openExercise.icon} />
+            </div>
+            <p className={styles.exerciseReps} style={{ textAlign: 'center', marginBottom: 20 }}>
+              {openExercise.reps}
+            </p>
+
+            <h3 style={{ marginBottom: 8 }}>Como fazer</h3>
+            <p style={{ marginBottom: 20 }}>{openExercise.howTo}</p>
+
+            <a
+              className={styles.videoLink}
+              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`como fazer ${openExercise.name} exercício`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ▶ Ver vídeo de demonstração
+            </a>
           </div>
         </div>
       )}
