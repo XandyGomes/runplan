@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getAthleteId } from '@/lib/session';
 import { generatePlan, ExperienceLevel } from '@/lib/planEngine';
+import { todayISOInBrazil } from '@/lib/dates';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ export async function POST() {
     raceDate: plan.race_date || undefined,
   });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISOInBrazil();
 
   // Só apaga treinos futuros/pendentes de hoje em diante — o que já foi concluído
   // (marcado feito ou vinculado a uma corrida do Strava) fica intocado.

@@ -1,10 +1,15 @@
 import { callAI } from './ai';
 import { GeneratedPlan } from './planEngine';
+import { todayISOInBrazil } from './dates';
 
-/** Segunda-feira da semana atual (não a próxima) — garante que hoje sempre caia dentro da semana 1. */
-export function mondayOfCurrentWeek(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+/**
+ * Segunda-feira da semana atual (não a próxima) — garante que hoje sempre caia dentro
+ * da semana 1. Parte do dia de hoje NO FUSO DO BRASIL: servidores da Vercel rodam em
+ * UTC por padrão, então usar `new Date()` puro aqui já calculava a semana errada pra
+ * quem gera um plano à noite (Brasil UTC-3 já caiu no dia seguinte em UTC).
+ */
+export function mondayOfCurrentWeek(): Date {
+  const d = new Date(`${todayISOInBrazil()}T00:00:00`);
   const day = d.getDay(); // 0=Dom .. 6=Sáb
   const diff = (day + 6) % 7;
   d.setDate(d.getDate() - diff);

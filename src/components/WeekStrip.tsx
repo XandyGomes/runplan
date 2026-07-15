@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Workout } from '@/lib/types';
 import { WORKOUT_TYPE_COLORS, WorkoutType } from '@/lib/workoutTypes';
+import { todayISOInBrazil } from '@/lib/dates';
 import styles from './WeekStrip.module.css';
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
@@ -45,7 +46,7 @@ export default function WeekStrip({
   onNextWeek: () => void;
 }) {
   const router = useRouter();
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = todayISOInBrazil();
   const days = Array.from({ length: 7 }).map((_, i) => addDaysISO(weekStartDate, i));
 
   // Um dia sem nenhum treino agendado é descanso de verdade — não tem checkbox pra

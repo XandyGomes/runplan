@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { callAI } from '@/lib/ai';
 import { supabase } from '@/lib/supabase';
 import { getAthleteId, getActivitiesWithRefresh } from '@/lib/session';
+import { todayISOInBrazil } from '@/lib/dates';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ async function buildPlanContext(athleteId: string): Promise<string> {
   const runWorkouts = all.filter(w => w.distance_km);
   const totalKm = runWorkouts.reduce((s, w) => s + (w.distance_km || 0), 0);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISOInBrazil();
   const next = all.filter(w => w.date >= today && !w.completed_at).slice(0, 5);
   const nextLines = next
     .map(w => `  • ${w.date} — ${w.title}${w.distance_km ? ` (${w.distance_km}km)` : ''}`)
@@ -76,7 +77,7 @@ async function buildRacesContext(athleteId: string): Promise<string> {
     .eq('athlete_id', Number(athleteId))
     .order('date', { ascending: true });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISOInBrazil();
   const upcoming = (races || []).filter(r => r.date >= today);
   if (upcoming.length === 0) return '';
 
@@ -107,6 +108,7 @@ export async function POST(request: Request) {
     }
 
     const hoje = new Date().toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       weekday: 'long',
       day: '2-digit',
       month: 'long',

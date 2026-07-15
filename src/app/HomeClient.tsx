@@ -11,6 +11,7 @@ import RestDayCard from '@/components/RestDayCard';
 import WeekOverviewSheet from '@/components/WeekOverviewSheet';
 import AddRunModal from '@/components/AddRunModal';
 import InstallPrompt from '@/components/InstallPrompt';
+import { todayISOInBrazil } from '@/lib/dates';
 import styles from './page.module.css';
 
 function addDaysISO(iso: string, days: number) {
@@ -19,7 +20,7 @@ function addDaysISO(iso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => todayISOInBrazil();
 
 type StravaActivitySummary = { id: string; distanceKm: number; movingTimeMin: number; startDate: string };
 

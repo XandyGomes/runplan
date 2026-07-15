@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Dados incompletos para gerar o plano.' }, { status: 400 });
   }
 
-  const startDate = mondayOfCurrentWeek(new Date());
+  const startDate = mondayOfCurrentWeek();
 
   let durationWeeks = durationWeeksInput ?? 9;
   if (raceDate) {
