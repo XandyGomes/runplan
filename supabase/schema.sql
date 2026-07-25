@@ -66,10 +66,21 @@ create table if not exists races (
   created_at timestamptz not null default now()
 );
 
+-- Inscrições de push (Web Push API) pra notificar dia de prova / retirada de kit.
+-- Tabela própria do RunPlan (não a `push_subscriptions` do Aura Run) pra evitar
+-- notificações cruzadas entre os dois apps quando o athlete_id é o mesmo.
+create table if not exists runplan_push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id bigint not null,
+  subscription jsonb not null,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists workouts_plan_id_idx on workouts(plan_id);
 create index if not exists workouts_date_idx on workouts(date);
 create index if not exists plans_athlete_idx on plans(strava_athlete_id);
 create index if not exists races_athlete_idx on races(athlete_id);
+create index if not exists runplan_push_subscriptions_athlete_idx on runplan_push_subscriptions(athlete_id);
 
 alter table profiles enable row level security;
 alter table plans enable row level security;
@@ -90,3 +101,7 @@ create policy "service access workouts" on workouts for all using (true) with ch
 alter table races enable row level security;
 drop policy if exists "service access races" on races;
 create policy "service access races" on races for all using (true) with check (true);
+
+alter table runplan_push_subscriptions enable row level security;
+drop policy if exists "service access runplan_push_subscriptions" on runplan_push_subscriptions;
+create policy "service access runplan_push_subscriptions" on runplan_push_subscriptions for all using (true) with check (true);

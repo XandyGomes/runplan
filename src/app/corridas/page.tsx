@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
+import NotificationPrompt from '@/components/NotificationPrompt';
 import styles from './page.module.css';
 
 type Race = {
@@ -173,6 +174,8 @@ export default function CorridasPage() {
           +
         </button>
       </div>
+
+      <NotificationPrompt />
 
       {loading ? (
         <p>Carregando suas corridas...</p>
